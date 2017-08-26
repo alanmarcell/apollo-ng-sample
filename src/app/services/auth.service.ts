@@ -3,6 +3,37 @@ import { HttpClient } from '../httpClient';
 import 'rxjs/add/operator/toPromise';
 import { User } from '../models/user';
 import { Router } from '@angular/router';
+import { Apollo } from 'apollo-angular';
+import gql from 'graphql-tag';
+
+const AuthToken = gql`
+mutation AuthToken ($input: GetAuthTokenInput!){
+  getAuthToken(input: $input) {
+    authToken
+    success
+    expiresIn
+  }
+}
+`;
+
+interface Node {
+  node: {
+    _id: string,
+    name: string,
+    price: number,
+    category: string
+  }
+}
+
+
+interface MutationResponse {
+  getAuthToken: {
+    authToken: string,
+    success: boolean,
+    expiresIn: number
+  }
+}
+
 
 @Injectable()
 export class AuthService {
@@ -12,7 +43,9 @@ export class AuthService {
   private expiresTimerId: any = null;
   private userAuthenticationUrl = 'api/authenticateUser';
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient,
+    private router: Router,
+    private apollo: Apollo) {
     this.token = localStorage.getItem('_token');
   }
 
@@ -28,8 +61,37 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  authenticateUser(user: User): Promise<any> {
-    return this.postUser(user).then(() => this.router.navigate(['products']));
+  async authenticateUser(user: User): Promise<any> {
+    try {
+      return await this.apollo.mutate<MutationResponse>({
+        mutation: AuthToken,
+        variables: {
+          input: user
+        }
+      }).subscribe(({ data }) => {
+        const response = data.getAuthToken;
+        this.token = response.authToken;
+        if (response.success === false) {
+          throw response
+        };
+        const expiresSeconds = response.expiresIn;
+        if (this.token) {
+          this.authenticated = true;
+          this.startExpiresTimer(expiresSeconds);
+          this.expires = new Date();
+          this.expires = this.expires.setSeconds(this.expires.getSeconds() + expiresSeconds);
+        }
+        localStorage.setItem('_token', this.token);
+        this.router.navigate(['products'])
+        return this.token;
+      }, (error) => {
+        console.log('there was an error sending the query', error);
+      })
+    } catch (e) {
+
+      console.log('---TESTE CATCH');
+      this.handleError(e);
+    }
   }
 
   public isAuthenticated() {
@@ -40,27 +102,6 @@ export class AuthService {
     this.logout();
     alert('Seu token expirou, faça login novamente');
     console.log('Session has been cleared');
-  }
-
-
-  private postUser(user: User): Promise<string> {
-    return this.http
-      .post(this.userAuthenticationUrl, JSON.stringify(user))
-      .toPromise()
-      .then(response => {
-        this.token = response.json().token;
-        if (response.json().success === false) { throw response };
-        const expiresSeconds = Number(response.json().expiresIn);
-        if (this.token) {
-          this.authenticated = true;
-          this.startExpiresTimer(expiresSeconds);
-          this.expires = new Date();
-          this.expires = this.expires.setSeconds(this.expires.getSeconds() + expiresSeconds);
-        }
-        localStorage.setItem('_token', this.token);
-        return this.token;
-      })
-      .catch(this.handleError);
   }
 
   private startExpiresTimer(seconds: number) {
@@ -76,6 +117,6 @@ export class AuthService {
 
   private handleError(error: any) {
     console.error('An error occurred', error);
-    return Promise.reject(error.message || error.json().message || error);
+    return Promise.reject(error.message || error);
   }
 }

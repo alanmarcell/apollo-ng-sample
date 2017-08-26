@@ -24,10 +24,10 @@ export class LoginComponent implements OnInit {
     this.user = new User();
   }
 
-  authenticate() {
-    this.authenticationService
+  async authenticate() {
+    await this.authenticationService
       .authenticateUser(this.user)
-      .catch(error => this.error = error);
+      .catch(error => console.log(error));
   }
 
   getToken() {
