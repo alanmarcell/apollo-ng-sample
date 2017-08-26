@@ -1,5 +1,4 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
 import { User } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
 
@@ -14,25 +13,13 @@ export class LoginComponent implements OnInit {
   error: any;
   token: any;
 
-  constructor(
-    private router: Router,
-    private authenticationService: AuthService,
-    private route: ActivatedRoute) {
-  }
+  constructor(private authenticationService: AuthService) { }
 
-  ngOnInit() {
-    this.user = new User();
-  }
+  ngOnInit() { this.user = new User(); }
 
-  async authenticate() {
-    await this.authenticationService
-      .authenticateUser(this.user)
-      .catch(error => console.log(error));
-  }
-
-  getToken() {
+  authenticate() {
     this.authenticationService
-      .getToken();
-
+      .authenticateUser(this.user)
+      .subscribe(error => this.error = error);
   }
 }

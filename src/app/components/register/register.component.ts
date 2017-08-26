@@ -39,22 +39,22 @@ export class RegisterComponent implements OnInit {
     this.user.admin = false;
   }
 
-  authenticate() {
+  authenticateUser() {
     this.user.userNameOrEmail = this.user.email || this.user.userName;
 
     this.authenticationService
       .authenticateUser(this.user)
-      .catch(error => this.error = error);
+      .subscribe(error => this.error = error);
   }
 
-  savePtz() {
+  saveUser() {
     this.userService
       .save(this.user)
       .then(user => {
         if (user) {
           this.user = user; // saved user, w/ id if new
         }
-        this.authenticate();
+        this.authenticateUser();
       })
       .catch(error => this.error = error); // TODO: Display error message
   }
