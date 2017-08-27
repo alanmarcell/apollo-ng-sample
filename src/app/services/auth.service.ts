@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '../httpClient';
-import 'rxjs/add/operator/toPromise';
-import { User } from '../models/user';
+import { User, IAuthUserArgs } from '../models/user';
 import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import { ApolloQueryResult } from 'apollo-client'
@@ -37,7 +35,7 @@ export class AuthService {
   private expiresTimerId: any = null;
   private userAuthenticationUrl = 'api/authenticateUser';
 
-  constructor(private http: HttpClient,
+  constructor(
     private router: Router,
     private apollo: Apollo) {
     this.token = localStorage.getItem('_token');
@@ -51,7 +49,7 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  getUserToken = (user: User): Observable<ApolloQueryResult<MutationResponse>> =>
+  getUserToken = (user: IAuthUserArgs): Observable<ApolloQueryResult<MutationResponse>> =>
     this.apollo.mutate<MutationResponse>({
       mutation: AuthToken,
       variables: {
@@ -69,7 +67,7 @@ export class AuthService {
     localStorage.setItem('_token', this.token);
   }
 
-  authenticateUser = (user) =>
+  authenticateUser = (user: IAuthUserArgs) =>
     new Observable(observer => {
       return this.getUserToken(user)
         .subscribe(({ data }) => {

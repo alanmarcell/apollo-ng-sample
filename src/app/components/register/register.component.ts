@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
-import { User } from '../../models/user';
+import { User, AuthUserArgs } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
 
 
@@ -15,7 +15,7 @@ import { AuthService } from '../../services/auth.service';
 export class RegisterComponent implements OnInit {
   @Input() user: User;
   newUser = false;
-  error: any;
+  errors: any;
   myForm: FormGroup;
 
   constructor(
@@ -36,26 +36,31 @@ export class RegisterComponent implements OnInit {
   ngOnInit() {
     this.newUser = true;
     this.user = new User();
-    this.user.admin = false;
   }
 
   authenticateUser() {
     this.user.userNameOrEmail = this.user.email || this.user.userName;
 
+    const authUserArgs: AuthUserArgs = {
+      userNameOrEmail: this.user.userNameOrEmail,
+      password: this.user.password
+    }
+
     this.authenticationService
-      .authenticateUser(this.user)
-      .subscribe(error => this.error = error);
+      .authenticateUser(authUserArgs)
+      .subscribe(error => this.errors = error);
   }
+
 
   saveUser() {
     this.userService
       .save(this.user)
-      .then(user => {
-        if (user) {
-          this.user = user; // saved user, w/ id if new
-        }
-        this.authenticateUser();
-      })
-      .catch(error => this.error = error); // TODO: Display error message
+      .subscribe(
+      value => null,
+      error => {
+        this.errors = error
+        console.log(error)
+      },
+      () => this.authenticateUser())
   }
 }

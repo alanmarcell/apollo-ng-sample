@@ -12,6 +12,16 @@ export interface IUser {
   otherUsersWithSameUserNameOrEmail(users: IUserArgs[]): boolean;
 }
 
+export interface IAuthUserArgs {
+  userNameOrEmail: string;
+  password: string
+}
+
+export class AuthUserArgs implements IAuthUserArgs {
+  userNameOrEmail: string;
+  password: string
+}
+
 export interface IUserArgs {
   userName: string;
   email: string;

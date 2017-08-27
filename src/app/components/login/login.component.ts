@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { User } from '../../models/user';
+import { AuthUserArgs } from '../../models/user';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -9,13 +9,13 @@ import { AuthService } from '../../services/auth.service';
 })
 
 export class LoginComponent implements OnInit {
-  @Input() user: User;
+  @Input() user: AuthUserArgs;
   error: any;
   token: any;
 
   constructor(private authenticationService: AuthService) { }
 
-  ngOnInit() { this.user = new User(); }
+  ngOnInit() { this.user = new AuthUserArgs(); }
 
   authenticate() {
     this.authenticationService
